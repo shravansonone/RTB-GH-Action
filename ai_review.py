@@ -1,41 +1,52 @@
-import subprocess
-import re
+import os
+import requests
 
-review = []
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-# Read diff file
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+
+headers = {
+    "Authorization": f"Bearer {HF_TOKEN}"
+}
+
+# Read diff
 with open("diff.txt") as f:
     diff = f.read()
 
-# Find changed files
-files = re.findall(r'\+\+\+ b/(.*)', diff)
+diff = diff[:4000]
 
-if not files:
-    review.append("No files changed.")
+prompt = f"""
+You are a senior software engineer.
 
-for file in files:
+Review the following code changes and identify:
+- syntax errors
+- YAML mistakes
+- Python issues
+- bad practices
 
-    # Check Python files
-    if file.endswith(".py"):
-        try:
-            subprocess.check_output(["python", "-m", "py_compile", file], stderr=subprocess.STDOUT)
-            review.append(f"{file} : Python syntax OK")
-        except subprocess.CalledProcessError as e:
-            review.append(f"{file} : Python syntax ERROR\n{e.output.decode()}")
+Code changes:
+{diff}
 
-    # Check YAML files
-    elif file.endswith(".yaml") or file.endswith(".yml"):
-        try:
-            subprocess.check_output(["python", "-c", f"import yaml; yaml.safe_load(open('{file}'))"])
-            review.append(f"{file} : YAML syntax OK")
-        except Exception as e:
-            review.append(f"{file} : YAML syntax ERROR\n{str(e)}")
+Provide clear review comments.
+"""
 
+payload = {
+    "inputs": prompt
+}
+
+try:
+    response = requests.post(API_URL, headers=headers, json=payload)
+    result = response.json()
+
+    if isinstance(result, list):
+        review = result[0]["generated_text"]
     else:
-        review.append(f"{file} : File type not checked")
+        review = f"AI response error: {result}"
 
-# Write review result
+except Exception as e:
+    review = f"AI review failed: {e}"
+
 with open("review.txt", "w") as f:
-    f.write("\n\n".join(review))
+    f.write(review)
 
-print("Validation complete")
+print("AI review completed")
