@@ -1,49 +1,41 @@
-import os
-import requests
+import subprocess
+import re
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+review = []
 
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+# Read diff file
+with open("diff.txt") as f:
+    diff = f.read()
 
-headers = {
-    "Authorization": f"Bearer {HF_TOKEN}"
-}
+# Find changed files
+files = re.findall(r'\+\+\+ b/(.*)', diff)
 
-# Read PR diff
-try:
-    with open("diff.txt") as f:
-        diff = f.read()
-except:
-    diff = "No code diff found."
+if not files:
+    review.append("No files changed.")
 
-# Limit size
-diff = diff[:4000]
+for file in files:
 
-prompt = f"""
-You are a senior DevOps engineer reviewing a pull request.
+    # Check Python files
+    if file.endswith(".py"):
+        try:
+            subprocess.check_output(["python", "-m", "py_compile", file], stderr=subprocess.STDOUT)
+            review.append(f"{file} : Python syntax OK")
+        except subprocess.CalledProcessError as e:
+            review.append(f"{file} : Python syntax ERROR\n{e.output.decode()}")
 
-Review the following code changes and give suggestions:
+    # Check YAML files
+    elif file.endswith(".yaml") or file.endswith(".yml"):
+        try:
+            subprocess.check_output(["python", "-c", f"import yaml; yaml.safe_load(open('{file}'))"])
+            review.append(f"{file} : YAML syntax OK")
+        except Exception as e:
+            review.append(f"{file} : YAML syntax ERROR\n{str(e)}")
 
-{diff}
-"""
+    else:
+        review.append(f"{file} : File type not checked")
 
-payload = {
-    "inputs": prompt,
-    "parameters": {
-        "max_new_tokens": 300
-    }
-}
-
-try:
-    response = requests.post(API_URL, headers=headers, json=payload)
-    result = response.json()
-
-    review = result[0]["generated_text"]
-
-except Exception as e:
-    review = f"AI review failed: {e}"
-
+# Write review result
 with open("review.txt", "w") as f:
-    f.write(review)
+    f.write("\n\n".join(review))
 
-print("AI review completed")
+print("Validation complete")
