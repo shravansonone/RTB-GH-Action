@@ -25,4 +25,3 @@ nums = [10, 20, 30]
 average = calculate_average(nums)
 
 print("Average value is: " + average)
-
