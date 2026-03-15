@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-nginx-deployment
+  labels:
+    app: nginx
+
+spec:
+  replicas: 3
+  
+  selector:
+    matchLabels:
+      app: nginx
+
+  template:
+    metadata:
+      labels:
+        app: nginx
+
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:lates   # ERROR 1: wrong image tag (should be latest)
+
+        ports:
+        - containerPort: "80"   # ERROR 2: should be integer not string
+
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "128Mi"
+
+        env:
+        - name: ENVIRONMENT
+          value: production
+
+        volumeMounts:
+        - name: nginx-storage
+          mountPath: /usr/share/nginx/html
+
+      volumes:
+      - name: nginx-storage
+        persistentVolumeClaim:
+          claimName: nginx-pvc   # ERROR 3: PVC may not exist
