@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install openai
+          pip install requests
 
       - name: Get PR Diff
         run: |
