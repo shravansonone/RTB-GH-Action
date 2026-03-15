@@ -3,7 +3,7 @@ import requests
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-API_URL = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2"
+API_URL = "https://router.huggingface.co/v1/chat/completions"
 
 headers = {
     "Authorization": f"Bearer {HF_TOKEN}",
@@ -15,34 +15,30 @@ try:
     with open("diff.txt", "r") as f:
         diff = f.read()
 except:
-    diff = "No code changes detected."
+    diff = "No code changes found."
 
-# limit size
 diff = diff[:4000]
 
-prompt = f"""
-You are a senior software engineer reviewing a pull request.
-
-Look at the following code changes and provide helpful suggestions.
-
-Focus on:
-- code readability improvements
-- better coding practices
-- performance improvements
-- security improvements
-- maintainability suggestions
-
-Do NOT say "no issues found".
-Always provide at least a few suggestions.
+payload = {
+    "model": "mistralai/Mistral-7B-Instruct-v0.2",
+    "messages": [
+        {
+            "role": "system",
+            "content": "You are a senior software engineer reviewing pull requests."
+        },
+        {
+            "role": "user",
+            "content": f"""
+Review the following code changes and suggest improvements.
+Focus on readability, best practices, and maintainability.
 
 Code changes:
 {diff}
 
-Respond with clear bullet point suggestions.
+Provide bullet point suggestions.
 """
-
-payload = {
-    "inputs": prompt
+        }
+    ]
 }
 
 try:
@@ -52,11 +48,7 @@ try:
         review = f"AI request failed ({response.status_code}):\n{response.text}"
     else:
         result = response.json()
-
-        if isinstance(result, list):
-            review = result[0].get("generated_text", "No suggestions generated.")
-        else:
-            review = f"AI response error: {result}"
+        review = result["choices"][0]["message"]["content"]
 
 except Exception as e:
     review = f"AI review failed: {str(e)}"
@@ -64,4 +56,4 @@ except Exception as e:
 with open("review.txt", "w") as f:
     f.write(review)
 
-print("Suggestion review completed")
+print("AI suggestion review completed")
