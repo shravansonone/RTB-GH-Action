@@ -1,7 +1,6 @@
 import os
 import requests
 
-# Hugging Face token from GitHub secret
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 API_URL = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2"
@@ -11,29 +10,35 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Read diff file
+# Read diff
 try:
     with open("diff.txt", "r") as f:
         diff = f.read()
 except:
-    diff = "No diff found."
+    diff = "No code changes detected."
 
-# Limit size so API does not reject request
+# limit size
 diff = diff[:4000]
 
 prompt = f"""
 You are a senior software engineer reviewing a pull request.
 
-Check the following code changes and identify:
-- syntax errors
-- Python issues
-- YAML mistakes
-- bad practices
+Look at the following code changes and provide helpful suggestions.
 
-Provide clear review comments.
+Focus on:
+- code readability improvements
+- better coding practices
+- performance improvements
+- security improvements
+- maintainability suggestions
+
+Do NOT say "no issues found".
+Always provide at least a few suggestions.
 
 Code changes:
 {diff}
+
+Respond with clear bullet point suggestions.
 """
 
 payload = {
@@ -43,24 +48,20 @@ payload = {
 try:
     response = requests.post(API_URL, headers=headers, json=payload)
 
-    print("Status Code:", response.status_code)
-    print("Raw Response:", response.text)
-
     if response.status_code != 200:
-        review = f"AI request failed with status {response.status_code}\n{response.text}"
+        review = f"AI request failed ({response.status_code}):\n{response.text}"
     else:
         result = response.json()
 
         if isinstance(result, list):
-            review = result[0].get("generated_text", "AI returned no review.")
+            review = result[0].get("generated_text", "No suggestions generated.")
         else:
             review = f"AI response error: {result}"
 
 except Exception as e:
     review = f"AI review failed: {str(e)}"
 
-# Write review result
 with open("review.txt", "w") as f:
     f.write(review)
 
-print("Review written to review.txt")
+print("Suggestion review completed")
