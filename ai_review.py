@@ -1,65 +1,49 @@
 import os
-from openai import OpenAI
+import requests
 
-# Get API key from GitHub Secrets
-api_key = os.getenv("OPENAI_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-# Initialize OpenAI client
-client = OpenAI(api_key=api_key)
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 
-# Read the diff file generated in workflow
+headers = {
+    "Authorization": f"Bearer {HF_TOKEN}"
+}
+
+# Read PR diff
 try:
-    with open("diff.txt", "r") as f:
-        code_diff = f.read()
-except FileNotFoundError:
-    code_diff = "No diff found."
+    with open("diff.txt") as f:
+        diff = f.read()
+except:
+    diff = "No code diff found."
 
-# Limit input size (important for free tier)
-MAX_CHARS = 6000
-code_diff = code_diff[:MAX_CHARS]
+# Limit size
+diff = diff[:4000]
 
 prompt = f"""
-You are a senior DevOps and software engineer.
+You are a senior DevOps engineer reviewing a pull request.
 
-Review the following pull request changes and provide:
-- Possible bugs
-- Code improvements
-- Best practices
-- Security concerns
+Review the following code changes and give suggestions:
 
-PR Diff:
-{code_diff}
+{diff}
 """
 
-review_output = ""
+payload = {
+    "inputs": prompt,
+    "parameters": {
+        "max_new_tokens": 300
+    }
+}
 
 try:
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",   # lightweight model
-        messages=[
-            {"role": "system", "content": "You are an expert code reviewer."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=500
-    )
+    response = requests.post(API_URL, headers=headers, json=payload)
+    result = response.json()
 
-    review_output = response.choices[0].message.content
+    review = result[0]["generated_text"]
 
 except Exception as e:
-    review_output = f"""
-AI review could not be completed.
+    review = f"AI review failed: {e}"
 
-Reason:
-{str(e)}
-
-Possible causes:
-- API quota exceeded
-- Invalid API key
-- Network issue
-"""
-
-# Save review so GitHub Action can post it as PR comment
 with open("review.txt", "w") as f:
-    f.write(review_output)
+    f.write(review)
 
-print("AI review completed.")
+print("AI review completed")
