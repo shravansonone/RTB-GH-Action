@@ -38,3 +38,5 @@ spec:
       - name: nginx-storage
         persistentVolumeClaim:
           claimName: nginx-pvc   # ERROR 5: PVC may not exist
+
+          
