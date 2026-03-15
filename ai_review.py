@@ -12,7 +12,7 @@ headers = {
 
 # Read diff
 try:
-    with open("diff.txt", "r") as f:
+    with open("diff.txt") as f:
         diff = f.read()
 except:
     diff = "No code changes found."
@@ -20,7 +20,7 @@ except:
 diff = diff[:4000]
 
 payload = {
-    "model": "mistralai/Mistral-7B-Instruct-v0.2",
+    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
     "messages": [
         {
             "role": "system",
@@ -30,12 +30,16 @@ payload = {
             "role": "user",
             "content": f"""
 Review the following code changes and suggest improvements.
-Focus on readability, best practices, and maintainability.
+
+Focus on:
+- readability
+- best practices
+- maintainability
 
 Code changes:
 {diff}
 
-Provide bullet point suggestions.
+Provide suggestions in bullet points.
 """
         }
     ]
