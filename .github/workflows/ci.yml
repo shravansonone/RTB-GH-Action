@@ -50,7 +50,3 @@ jobs:
           echo "Pushing Docker image to registry..."
           echo "Image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
           echo "Docker image successfully pushed (simulated)"
-
-  deploy:
-    needs: ci
-    uses: shravansonone/RTB-GH-Action/.github/workflows/cd.yml@main
