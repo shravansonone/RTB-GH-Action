@@ -2,10 +2,6 @@ name: Node CD Pipeline
 
 on:
   workflow_call:
-    inputs:
-      image_tag:
-        required: true
-        type: string
 
 jobs:
 
@@ -14,26 +10,15 @@ jobs:
 
     steps:
 
-      - name: Deploy to Kubernetes (Dummy)
+      - name: Deploy to Kubernetes
         run: |
-          IMAGE=node-demo:${{ inputs.image_tag }}
-          CLUSTER=demo-k8s-cluster
+          echo "Deploying application to Kubernetes (simulated)"
 
-          echo "Deploying $IMAGE to Kubernetes cluster $CLUSTER"
-          echo "Deployment successful (simulated)"
-
-      - name: Sanity Check Environment
+      - name: Sanity Check
         run: |
-          APP_URL=http://demo-app.example.com
-          echo "Running sanity check on $APP_URL"
-          echo "Application responded with HTTP 200"
-          echo "Environment is healthy"
+          echo "Checking application health endpoint"
+          echo "Application is healthy"
 
-      - name: Send Email Notification (Dummy)
+      - name: Send Email
         run: |
-          EMAIL=dev-team@example.com
-          echo "Sending deployment email..."
-          echo "To: $EMAIL"
-          echo "Subject: Deployment Successful"
-          echo "Body: Application deployed successfully and environment is healthy"
-          echo "Email sent (simulated)"
+          echo "Sending deployment notification email"
