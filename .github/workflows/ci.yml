@@ -37,7 +37,13 @@ jobs:
       - name: Build Docker Image
         run: docker build -t node-demo:${{ github.sha }} .
 
-      - name: Cleanup
+      # Dummy Push Step
+      - name: Push Docker Image (Dummy)
         run: |
-          docker stop test-container || true
-          docker rm test-container || true
+          IMAGE_NAME=node-demo
+          IMAGE_TAG=${{ github.sha }}
+          REGISTRY=docker.io/demo-registry
+          
+          echo "Pushing Docker image to registry..."
+          echo "Image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+          echo "Docker image successfully pushed (simulated)"
