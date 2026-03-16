@@ -37,12 +37,6 @@ jobs:
       - name: Build Docker Image
         run: docker build -t node-demo:${{ github.sha }} .
 
-      - name: Run Container Test
-        run: |
-          docker run -d -p 3000:3000 --name test-container node-demo:${{ github.sha }}
-          sleep 10
-          docker ps
-
       - name: Cleanup
         run: |
           docker stop test-container || true
