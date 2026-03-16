@@ -1,0 +1,47 @@
+name: Node CD Pipeline
+
+on:
+  workflow_call:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Step 1: Get commit id (image tag)
+      - name: Set Commit ID
+        run: echo "COMMIT_ID=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      # Step 2: Deploy to Kubernetes (Dummy)
+      - name: Deploy to Kubernetes
+        run: |
+          IMAGE_NAME=node-demo
+          IMAGE_TAG=${{ env.COMMIT_ID }}
+          CLUSTER=demo-k8s-cluster
+
+          echo "Deploying Docker image to Kubernetes cluster..."
+          echo "Cluster: $CLUSTER"
+          echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+          echo "Deployment successful (simulated)"
+
+      # Step 3: Sanity Check Environment
+      - name: Sanity Check Environment
+        run: |
+          APP_URL=http://demo-app.example.com
+          echo "Checking application health..."
+          echo "Curling $APP_URL"
+          echo "Application responded with HTTP 200 (simulated)"
+          echo "Environment is healthy"
+
+      # Step 4: Send Email Notification (Dummy)
+      - name: Send Deployment Email
+        run: |
+          USER_EMAIL=gittesting17@gmail.com
+          echo "Sending deployment notification email..."
+          echo "To: $USER_EMAIL"
+          echo "Subject: Application Deployment Successful"
+          echo "Body:"
+          echo "Application deployed successfully to Kubernetes."
+          echo "Environment is up and running."
+          echo "Email sent (simulated)"
