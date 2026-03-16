@@ -8,13 +8,19 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    outputs:
+      commit_id: ${{ steps.commit.outputs.commit_id }}
+
     steps:
 
       - name: Checkout Application Code
         uses: actions/checkout@v4
 
       - name: Set Commit ID
-        run: echo "COMMIT_ID=${GITHUB_SHA::7}" >> $GITHUB_ENV
+        id: commit
+        run: |
+          COMMIT_ID=${GITHUB_SHA::7}
+          echo "commit_id=$COMMIT_ID" >> $GITHUB_OUTPUT
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -39,14 +45,18 @@ jobs:
           sleep 5
 
       - name: Build Docker Image
-        run: docker build -t node-demo:${{ env.COMMIT_ID }} .
+        run: |
+          docker build -t node-demo:${{ steps.commit.outputs.commit_id }} .
 
       - name: Push Docker Image (Dummy)
         run: |
-          IMAGE_NAME=node-demo
-          IMAGE_TAG=${{ env.COMMIT_ID }}
+          IMAGE=node-demo:${{ steps.commit.outputs.commit_id }}
           REGISTRY=docker.io/demo-registry
+          echo "Pushing $IMAGE to $REGISTRY"
+          echo "Docker image pushed successfully (simulated)"
 
-          echo "Pushing Docker image to registry..."
-          echo "Image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
-          echo "Docker image successfully pushed (simulated)"
+  cd:
+    needs: ci
+    uses: shravansonone/RTB-GH-Action/.github/workflows/cd.yml@main
+    with:
+      image_tag: ${{ needs.ci.outputs.commit_id }}
