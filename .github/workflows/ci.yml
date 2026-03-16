@@ -54,9 +54,3 @@ jobs:
           REGISTRY=docker.io/demo-registry
           echo "Pushing $IMAGE to $REGISTRY"
           echo "Docker image pushed successfully (simulated)"
-
-  cd:
-    needs: ci
-    uses: shravansonone/RTB-GH-Action/.github/workflows/cd.yml@main
-    with:
-      image_tag: ${{ needs.ci.outputs.commit_id }}
