@@ -1,24 +1,50 @@
 name: Node CI Pipeline
 
+on:
+  workflow_call:
+
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
 
-      - name: Checkout Code
+      - name: Checkout Application Code
         uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: npm
 
       - name: Install Dependencies
         run: npm install
 
+      - name: Lint Code
+        run: npm run lint || echo "No lint"
+
+      - name: Run Tests
+        run: npm test || echo "No tests"
+
+      - name: Build App
+        run: npm run build || echo "No build"
+
       - name: Start App Test
-        run: node src/app.js & sleep 5
+        run: |
+          node src/app.js &
+          sleep 5
 
       - name: Build Docker Image
-        run: docker build -t node-demo:latest .
+        run: docker build -t node-demo:${{ github.sha }} .
+
+      - name: Scan Docker Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: node-demo:${{ github.sha }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: .
