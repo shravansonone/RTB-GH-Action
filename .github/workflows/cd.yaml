@@ -8,6 +8,7 @@ on:
         type: string
 
 jobs:
+
   deploy:
     runs-on: ubuntu-latest
 
@@ -24,7 +25,6 @@ jobs:
       - name: Sanity Check Environment
         run: |
           APP_URL=http://demo-app.example.com
-
           echo "Running sanity check on $APP_URL"
           echo "Application responded with HTTP 200"
           echo "Environment is healthy"
@@ -32,7 +32,6 @@ jobs:
       - name: Send Email Notification (Dummy)
         run: |
           EMAIL=dev-team@example.com
-
           echo "Sending deployment email..."
           echo "To: $EMAIL"
           echo "Subject: Deployment Successful"
