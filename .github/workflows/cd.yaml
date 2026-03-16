@@ -1,26 +1,40 @@
 name: Node CD Pipeline
 
 on:
-  workflow_run:
-    workflows: ["Node CI Pipeline"]
-    types:
-      - completed
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Kubernetes
-        run: |
-          echo "Deploying docker image to Kubernetes cluster (simulated)"
 
-      - name: Sanity Check
+      - name: Deploy to Kubernetes (Dummy)
         run: |
-          echo "Checking application health endpoint"
-          echo "Application responded with HTTP 200 (simulated)"
+          IMAGE=node-demo:${{ inputs.image_tag }}
+          CLUSTER=demo-k8s-cluster
 
-      - name: Send Email
+          echo "Deploying $IMAGE to Kubernetes cluster $CLUSTER"
+          echo "Deployment successful (simulated)"
+
+      - name: Sanity Check Environment
         run: |
-          echo "Sending deployment email notification (simulated)"
+          APP_URL=http://demo-app.example.com
+
+          echo "Running sanity check on $APP_URL"
+          echo "Application responded with HTTP 200"
+          echo "Environment is healthy"
+
+      - name: Send Email Notification (Dummy)
+        run: |
+          EMAIL=dev-team@example.com
+
+          echo "Sending deployment email..."
+          echo "To: $EMAIL"
+          echo "Subject: Deployment Successful"
+          echo "Body: Application deployed successfully and environment is healthy"
+          echo "Email sent (simulated)"
