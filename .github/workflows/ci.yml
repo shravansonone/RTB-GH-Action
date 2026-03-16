@@ -16,7 +16,7 @@ jobs:
       - name: Checkout Application Code
         uses: actions/checkout@v4
 
-      - name: Set Commit ID
+      - name: Get Commit ID
         id: commit
         run: |
           COMMIT_ID=${GITHUB_SHA::7}
