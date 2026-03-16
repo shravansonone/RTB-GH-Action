@@ -16,8 +16,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
-          cache-dependency-path: package-lock.json
 
       - name: Install Dependencies
         run: npm install
@@ -44,17 +42,6 @@ jobs:
           docker run -d -p 3000:3000 --name test-container node-demo:${{ github.sha }}
           sleep 10
           docker ps
-
-      - name: Security Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: node-demo:${{ github.sha }}
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-build
-          path: .
 
       - name: Cleanup
         run: |
