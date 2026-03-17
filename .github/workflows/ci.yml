@@ -4,16 +4,14 @@ on:
   workflow_call:
 
 jobs:
-
   ci:
     runs-on: ubuntu-latest
 
-    # Job-level output so reusable workflows can access commit ID
+    # Job output exposes commit SHA to other workflows
     outputs:
       commit_id: ${{ steps.get_commit.outputs.commit_id }}
 
     steps:
-
       - name: Checkout Application Code
         uses: actions/checkout@v4
 
