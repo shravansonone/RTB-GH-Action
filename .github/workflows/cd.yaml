@@ -2,6 +2,11 @@ name: Node CD Pipeline
 
 on:
   workflow_call:
+    inputs:
+      image_tag:
+        required: false
+        type: string
+        default: "latest"
     secrets:
       GH_USERNAME:
         required: true
