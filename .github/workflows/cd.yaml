@@ -34,9 +34,9 @@ jobs:
 
       - name: Deploy to EC2 (Minikube)
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
 
-            IMAGE_TAG=${{ inputs.image_tag }}
+            IMAGE_TAG="${{ inputs.image_tag }}"
             echo "🚀 Updating deployment.yaml with tag $IMAGE_TAG"
 
             cd /home/ec2-user/app
@@ -49,7 +49,7 @@ jobs:
             fi
 
             # Update deployment.yaml image
-            sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/node-demo:$IMAGE_TAG|g" k8s/deployment.yaml
+            sed -i "s|image:.*|image: ${{ secrets.DOCKER_USERNAME }}/node-demo:$IMAGE_TAG|g" k8s/deployment.yaml
 
             # Commit and push changes
             git config user.name "${{ secrets.GH_USERNAME }}"
@@ -66,7 +66,7 @@ jobs:
       - name: Check Application Running
         run: |
           echo "🔍 Verifying if application is running..."
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
 
             APP_IP=$(minikube ip)
             APP_PORT=3000
