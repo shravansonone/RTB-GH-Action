@@ -54,14 +54,14 @@ jobs:
           fi
 
           echo "🚀 Pulling latest Docker image"
-          docker pull $DOCKER_USERNAME/node-demo:latest
+          docker pull $DOCKER_USERNAME/node-demo
 
           echo "🚀 Stopping and removing existing container (if any)"
           docker stop node-demo || true
           docker rm node-demo || true
 
           echo "🚀 Running new container"
-          docker run -d --name node-demo -p 3000:3000 $DOCKER_USERNAME/node-demo:latest
+          docker run -d --name node-demo -p 3000:3000 $DOCKER_USERNAME/node-demo
 
           echo "✅ Deployment completed using Docker"
           EOF
