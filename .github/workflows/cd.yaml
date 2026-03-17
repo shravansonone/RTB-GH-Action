@@ -23,60 +23,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Checkout Repo
+      - name: Checkout this repo
         uses: actions/checkout@v4
 
-      - name: Setup SSH Key
+      - name: Set up SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-          chmod 600 key.pem
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/key.pem
+          chmod 600 ~/.ssh/key.pem
 
-      - name: Deploy to EC2 (Minikube)
+      - name: Deploy to EC2
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          REPO: ${{ github.repository }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/key.pem ec2-user@$EC2_HOST << EOF
+          
+          echo "🚀 Updating deployment.yaml with tag $IMAGE_TAG"
 
-            IMAGE_TAG="${{ inputs.image_tag }}"
-            echo "🚀 Updating deployment.yaml with tag $IMAGE_TAG"
+          cd /home/ec2-user/app
 
-            cd /home/ec2-user/app
+          # Clone repo if not exists
+          if [ ! -d ".git" ]; then
+            git clone https://$GH_USERNAME:$GH_PAT@github.com/$REPO .
+          else
+            git pull https://$GH_USERNAME:$GH_PAT@github.com/$REPO main
+          fi
 
-            # Clone repo if not exists
-            if [ ! -d ".git" ]; then
-              git clone https://${{ secrets.GH_USERNAME }}:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} .
-            else
-              git pull https://${{ secrets.GH_USERNAME }}:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} main
-            fi
+          # Update deployment.yaml image
+          sed -i "s|image:.*|image: $DOCKER_USERNAME/node-demo:$IMAGE_TAG|g" k8s/deployment.yaml
 
-            # Update deployment.yaml image
-            sed -i "s|image:.*|image: ${{ secrets.DOCKER_USERNAME }}/node-demo:$IMAGE_TAG|g" k8s/deployment.yaml
+          # Commit and push changes
+          git config user.name "$GH_USERNAME"
+          git config user.email "$GH_USERNAME@users.noreply.github.com"
 
-            # Commit and push changes
-            git config user.name "${{ secrets.GH_USERNAME }}"
-            git config user.email "${{ secrets.GH_USERNAME }}@users.noreply.github.com"
+          git add k8s/deployment.yaml
+          git commit -m "Update image to $IMAGE_TAG" || echo "No changes to commit"
+          git push https://$GH_USERNAME:$GH_PAT@github.com/$REPO HEAD:main
 
-            git add k8s/deployment.yaml
-            git commit -m "Update image to $IMAGE_TAG" || echo "No changes to commit"
-            git push https://${{ secrets.GH_USERNAME }}:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} HEAD:main
-
-            echo "✅ Deployment Completed"
-
-          EOF
-
-      - name: Check Application Running
-        run: |
-          echo "🔍 Verifying if application is running..."
-          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-
-            APP_IP=$(minikube ip)
-            APP_PORT=3000
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$APP_IP:$APP_PORT || echo "000")
-
-            if [ "$RESPONSE" = "200" ]; then
-              echo "✅ Application is running at http://$APP_IP:$APP_PORT"
-            else
-              echo "❌ Application is not reachable (HTTP $RESPONSE)"
-              exit 1
-            fi
-
+          echo "✅ Deployment Completed"
           EOF
