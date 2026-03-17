@@ -1,19 +1,85 @@
 name: Node CD Pipeline
 
 on:
-  workflow_call:
-    inputs:
-      commit_id:
-        required: true
-        type: string
+  workflow_run:
+    workflows: ["Node CI Pipeline"]
+    types:
+      - completed
+
+permissions:
+  contents: write
 
 jobs:
-  deploy:
+  cd:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Print Commit ID
-        run: echo "Deploying image with tag ${{ inputs.commit_id }}"
+      - name: Set Image Tag
+        run: |
+          echo "IMAGE_TAG=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_ENV
+
+      - name: Update, Commit & Push Manifest
+        run: |
+          echo "Updating deployment.yaml with tag $IMAGE_TAG"
+
+          sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/node-demo:$IMAGE_TAG|g" k8s/deployment.yaml
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add k8s/deployment.yaml
+          git commit -m "Update image to $IMAGE_TAG" || echo "No changes to commit"
+
+          git push https://${{ secrets.GH_PAT }}@github.com/${{ github.repository }} HEAD:main
+
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Deploy to EC2 (Minikube)
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << EOF
+
+            echo "🚀 Starting Deployment..."
+
+            mkdir -p /home/ec2-user/app
+            cd /home/ec2-user/app
+
+            if [ ! -d ".git" ]; then
+              git clone https://${{ secrets.GH_PAT }}@github.com/${{ github.repository }} .
+            else
+              git pull https://${{ secrets.GH_PAT }}@github.com/${{ github.repository }} main
+            fi
+
+            # Apply Kubernetes manifests
+            kubectl apply -f k8s/
+
+            # Restart deployment
+            kubectl rollout restart deployment node-app
+
+            echo "✅ Deployment Completed"
+
+          EOF
+
+      - name: Check Application Running
+        run: |
+          echo "🔍 Verifying if application is running..."
+          ssh -o StrictHostKeyChecking=no -i key.pem ec2-user@${{ secrets.EC2_HOST }} << EOF
+
+            APP_IP=$(minikube ip)
+            APP_PORT=3000
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$APP_IP:$APP_PORT || echo "000")
+
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Application is running at http://$APP_IP:$APP_PORT"
+            else
+              echo "❌ Application is not reachable (HTTP $RESPONSE)"
+              exit 1
+            fi
+
+          EOF
