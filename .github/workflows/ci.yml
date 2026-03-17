@@ -62,3 +62,14 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/node-demo:${{ steps.commit.outputs.commit_id }}
+
+      - name: Update and Commit Kubernetes Manifest
+        run: |
+          sed -i "s|IMAGE_TAG|${{ steps.commit.outputs.commit_id }}|g" k8s/deployment.yaml
+      
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+      
+          git add k8s/deployment.yaml
+          git commit -m "Update image tag to ${{ steps.commit.outputs.commit_id }}" || echo "No changes to commit"
+          git push
