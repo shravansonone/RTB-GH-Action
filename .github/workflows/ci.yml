@@ -62,3 +62,14 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/node-demo:${{ steps.commit.outputs.commit_id }}
+
+  cd:
+    needs: ci
+    uses: shravansonone/RTB-GH-Action/.github/workflows/cd.yaml@main
+    with:
+      image_tag: ${{ steps.commit.outputs.commit_id }}
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      EC2_HOST: ${{ secrets.EC2_HOST }}
