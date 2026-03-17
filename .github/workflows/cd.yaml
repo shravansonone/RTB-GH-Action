@@ -2,23 +2,18 @@ name: Node CD Pipeline
 
 on:
   workflow_call:
+    inputs:
+      commit_id:
+        required: true
+        type: string
 
 jobs:
-
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-      - name: Deploy to Kubernetes
-        run: |
-          echo "Deploying application to Kubernetes (simulated)"
-
-      - name: Sanity Check
-        run: |
-          echo "Checking application health endpoint"
-          echo "Application is healthy"
-
-      - name: Send Email
-        run: |
-          echo "Sending deployment notification email"
+      - name: Print Commit ID
+        run: echo "Deploying image with tag ${{ inputs.commit_id }}"
