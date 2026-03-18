@@ -49,9 +49,9 @@ jobs:
           cd /home/ec2-user/app || mkdir -p /home/ec2-user/app && cd /home/ec2-user/app
 
           if [ ! -d ".git" ]; then
-            git clone https://$GH_USERNAME:$GH_PAT@github.com/$REPO .
+            git clone https://github.com/shravansonone/RTB-sample-nodejs.git .
           else
-            git pull https://$GH_USERNAME:$GH_PAT@github.com/$REPO main
+            git pull https://github.com/shravansonone/RTB-sample-nodejs.git main
           fi
 
           echo " Pulling latest Docker image"
