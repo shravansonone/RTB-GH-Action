@@ -43,7 +43,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/key.pem ec2-user@$EC2_HOST << 'EOF'
 
-          echo "🚀 Cloning or updating repo on EC2"
+          echo "Cloning or updating repo on EC2"
 
           cd /home/ec2-user/app || mkdir -p /home/ec2-user/app && cd /home/ec2-user/app
 
@@ -53,15 +53,15 @@ jobs:
             git pull https://$GH_USERNAME:$GH_PAT@github.com/$REPO main
           fi
 
-          echo "🚀 Pulling latest Docker image"
+          echo " Pulling latest Docker image"
           docker pull $DOCKER_USERNAME/node-demo
 
-          echo "🚀 Stopping and removing existing container (if any)"
+          echo " Stopping and removing existing container (if any)"
           docker stop node-demo || true
           docker rm node-demo || true
 
-          echo "🚀 Running new container"
+          echo " Running new container"
           docker run -d --name node-demo -p 3000:3000 $DOCKER_USERNAME/node-demo
 
-          echo "✅ Deployment completed using Docker"
+          echo " Deployment completed using Docker"
           EOF
