@@ -63,7 +63,7 @@ jobs:
           docker rm node-demo || true
 
           echo " Running new container"
-          docker run -d --name node-demo -p 3000:3000 $DOCKER_USERNAME/node-demo:$IMAGE_TAG
+          docker run -it -d --name node-demo -p 3000:3000 $DOCKER_USERNAME/node-demo:$IMAGE_TAG
 
           echo " Deployment completed using Docker"
           EOF
